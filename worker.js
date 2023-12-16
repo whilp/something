@@ -1,4 +1,4 @@
-import sqlite3InitModule from 'sqlite-wasm/index.mjs';
+import sqlite3InitModule from './sqlite-wasm/index.mjs';
 
 const start = function (sqlite3) {
   console.log('Running SQLite3 version', sqlite3.version.libVersion);
