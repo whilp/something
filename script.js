@@ -1,5 +1,17 @@
 import { sqlite3Worker1Promiser } from './sqlite-wasm/index.mjs'
 
+class DB {
+    constructor() {
+        self.promiser = await new Promise((resolve) => {
+            const _promiser = sqlite3Worker1Promiser({
+                onready: () => {
+                    resolve(_promiser);
+                },
+            });
+        });
+    }
+}
+
 (async () => {
     try {
         console.log('Loading and initializing SQLite3 module...');
@@ -18,7 +30,7 @@ import { sqlite3Worker1Promiser } from './sqlite-wasm/index.mjs'
             filename: 'file:mydb.sqlite3?vfs=opfs',
         });
 
-        const { dbID } = got;
+        const { dbId } = got;
 
         await promiser('exec', { dbId, sql: 'CREATE TABLE IF NOT EXISTS t(a,b)' });
     
