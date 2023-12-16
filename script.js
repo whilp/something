@@ -1,3 +1,5 @@
+import sqlite3InitModule from 'sqlite-wasm/index.mjs';
+
 (async () => {
   const worker = new Worker('worker.js', {
     type: 'module',
