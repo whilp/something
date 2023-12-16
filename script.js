@@ -1,17 +1,41 @@
-import sqlite3InitModule from './sqlite-wasm/index.mjs';
+// import sqlite3InitModule from './sqlite-wasm/index.mjs';
+import { sqlite3Worker1Promiser } from './sqlite-wasm/index.mjs'
+
+const log = (...args) => console.log(...args);
+const error = (...args) => console.error(...args);
 
 (async () => {
-  const worker = new Worker('worker.js', {
-    type: 'module',
-  });
+  try {
+    log('Loading and initializing SQLite3 module...');
 
-  worker.addEventListener('message', ({ data }) => {
-    switch (data.type) {
-      case 'log':
-        console.log(data.payload.cssClass, ...data.payload.args);
-        break;
-      default:
-        console.log('error', 'Unhandled message:', data.type);
+    const promiser = await new Promise((resolve) => {
+      const _promiser = sqlite3Worker1Promiser({
+        onready: () => {
+          resolve(_promiser);
+        },
+      });
+    });
+
+    log('Done initializing. Running demo...');
+
+    let response;
+
+    response = await promiser('config-get', {});
+    log('Running SQLite3 version', response.result.version.libVersion);
+
+    response = await promiser('open', {
+      filename: 'file:mydb.sqlite3?vfs=opfs',
+    });
+    const { dbId } = response;
+    log(
+      'OPFS is available, created persisted database at',
+      response.result.filename.replace(/^file:(.*?)\?vfs=opfs$/, '$1'),
+    );
+    // Your SQLite code here.
+  } catch (err) {
+    if (!(err instanceof Error)) {
+      err = new Error(err.result.message);
     }
-  });
+    error(err.name, err.message);
+  }
 })();
