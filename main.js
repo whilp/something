@@ -29,13 +29,13 @@ const start = function (sqlite3) {
 
 console.log('Loading and initializing SQLite3 module...');
 sqlite3InitModule({
-  print: log,
-  printErr: error,
+  print: console.log,
+  printErr: console.error,
 }).then((sqlite3) => {
   console.log('Done initializing. Running demo...');
   try {
     start(sqlite3);
   } catch (err) {
-    error(err.name, err.message);
+    console.error(err.name, err.message);
   }
 });
