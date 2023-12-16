@@ -8,16 +8,29 @@ class DB {
     this.vfs = "opfs";
   }
 
-  open() {
-    got = await promiser('open', {
+  static async create() {
+    const promiser = await new Promise((resolve) => {
+      const _promiser = sqlite3Worker1Promiser({
+        onready: () => {
+          resolve(_promiser);
+        },
+      });
+    });
+
+    return new DB(promiser);
+  }
+
+  async open() {
+    got = await this.promiser('open', {
       filename: `file:${this.filename}?vfs=${this.vfs}`,
     });
     this.dbId = got.dbId;
     return this;
   }
 
-  exec(...args) {
-    await promiser('exec', { dbId, sql: 'CREATE TABLE IF NOT EXISTS t(a,b)' });
+  async exec(sql) {
+    await this.promiser('exec', { dbId: this.dbId, sql: sql });
+    return this;
   }
 }
 
