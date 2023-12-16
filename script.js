@@ -1,41 +1,49 @@
-// import sqlite3InitModule from './sqlite-wasm/index.mjs';
 import { sqlite3Worker1Promiser } from './sqlite-wasm/index.mjs'
 
-const log = (...args) => console.log(...args);
-const error = (...args) => console.error(...args);
-
 (async () => {
-  try {
-    log('Loading and initializing SQLite3 module...');
+    try {
+        console.log('Loading and initializing SQLite3 module...');
 
-    const promiser = await new Promise((resolve) => {
-      const _promiser = sqlite3Worker1Promiser({
-        onready: () => {
-          resolve(_promiser);
-        },
-      });
-    });
+        const promiser = await new Promise((resolve) => {
+            const _promiser = sqlite3Worker1Promiser({
+                onready: () => {
+                    resolve(_promiser);
+                },
+            });
+        });
 
-    log('Done initializing. Running demo...');
+        let got;
 
-    let response;
+        got = await promiser('open', {
+            filename: 'file:mydb.sqlite3?vfs=opfs',
+        });
 
-    response = await promiser('config-get', {});
-    log('Running SQLite3 version', response.result.version.libVersion);
+        const { dbID } = got;
 
-    response = await promiser('open', {
-      filename: 'file:mydb.sqlite3?vfs=opfs',
-    });
-    const { dbId } = response;
-    log(
-      'OPFS is available, created persisted database at',
-      response.result.filename.replace(/^file:(.*?)\?vfs=opfs$/, '$1'),
-    );
-    // Your SQLite code here.
-  } catch (err) {
-    if (!(err instanceof Error)) {
-      err = new Error(err.result.message);
+        await promiser('exec', { dbId, sql: 'CREATE TABLE IF NOT EXISTS t(a,b)' });
+    
+        for (let i = 20; i <= 25; ++i) {
+          await promiser('exec', {
+            dbId,
+            sql: 'INSERT INTO t(a,b) VALUES (?,?)',
+            bind: [i, i * 2],
+          });
+        }
+    
+        await promiser('exec', {
+          dbId,
+          sql: 'SELECT a FROM t ORDER BY a LIMIT 3',
+          callback: (result) => {
+            if (!result.row) {
+              return;
+            }
+            console.log(result)
+          },
+        });
+    } catch (err) {
+        if (!(err instanceof Error)) {
+            err = new Error(err.result.message);
+        }
+        console.error(err.name, err.message);
     }
-    error(err.name, err.message);
-  }
 })();
